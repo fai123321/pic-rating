@@ -45,7 +45,7 @@ body{font-family:"Microsoft YaHei",sans-serif;background:#f0f0f0;color:#333;line
     <h1>图片评分问卷</h1>
     <p>您好！感谢您参与本次照片评估研究。</p>
     <p>问卷包含180张照片，预计完成需25-40分钟，建议您在填写中途适当休息。接下来，您将看到一系列物体的照片。您的任务是根据您的第一印象，回答与每张照片相关的几个问题。</p>
-    <p>您的所有回答都将被严格保密，仅用于学术研究。请根据您的真实感受作答。谢谢您的合作！</p>
+    <p>您的所有回答都将被严格保密，仅用于学术研究。请根据您的真实感受作答。在完成问卷后请将生成的文本数据发送至微信：17605316919。谢谢您的合作！</p>
   </div>
 
   <div class="card" id="info-header" style="display:none">
@@ -229,9 +229,9 @@ function showResult(){
   ta.select();
 
   navigator.clipboard.writeText(csv).then(function(){
-    alert("评分数据已复制到剪贴板！请粘贴到问卷星文本框中提交。");
+    alert("评分数据已复制到剪贴板。请发送到微信号：17605316919，谢谢！");
   }).catch(function(){
-    alert("请手动全选下方文本框（Ctrl+A）→ 复制（Ctrl+C）→ 粘贴到问卷星。");
+    alert("请手动全选下方文本框（Ctrl+A）→ 复制（Ctrl+C）→ 发送到微信号：17605316919。谢谢！");
   });
 
   window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});

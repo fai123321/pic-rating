@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片评分问卷</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei",sans-serif;background:#f0f0f0;color:#333;line-height:1.6}
+.container{max-width:750px;margin:0 auto;padding:30px 20px}
+.intro{background:#fff;border-radius:12px;padding:30px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.intro h1{font-size:22px;margin-bottom:16px;color:#1a1a1a}
+.intro p{margin-bottom:8px;font-size:15px;color:#555}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.form-group input,.form-group select{padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%;max-width:300px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.card h3{font-size:16px;margin-bottom:12px;color:#1a1a1a}
+.card img{width:100%;max-width:600px;display:block;margin:0 auto 16px;border-radius:8px}
+.q{margin-bottom:14px}
+.q .qt{font-size:14px;font-weight:600;margin-bottom:6px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns button{width:44px;height:44px;border:2px solid #ddd;border-radius:8px;background:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:all .15s}
+.btns button:hover{border-color:#3b82f6;color:#3b82f6}
+.btns button.sel{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.progress{position:sticky;top:0;background:#1a1a1a;color:#fff;padding:10px 20px;text-align:center;font-size:14px;z-index:10;border-radius:0 0 8px 8px;margin-bottom:20px}
+.progress .bar{height:4px;background:#444;border-radius:2px;margin-top:6px}
+.progress .bar-fill{height:100%;background:#3b82f6;border-radius:2px;transition:width .3s}
+.submit-area{text-align:center;padding:30px}
+.submit-area button{padding:14px 48px;font-size:16px;background:#22c55e;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600}
+.submit-area button:hover{background:#16a34a}
+.submit-area textarea{width:100%;max-width:600px;min-height:120px;margin-top:16px;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:monospace}
+.hint{color:#888;font-size:13px;margin-top:6px}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress">
+  <span id="prog-text">已评分: 0 / 180</span>
+  <div class="bar"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+</div>
+
+<div class="container">
+  <div class="intro">
+    <h1>图片评分问卷</h1>
+    <p>您好！感谢您参与本次照片评估研究。</p>
+    <p>问卷包含180张照片，预计完成需25-40分钟，建议您在填写中途适当休息。接下来，您将看到一系列物体的照片。您的任务是根据您的第一印象，回答与每张照片相关的几个问题。</p>
+    <p>您的所有回答都将被严格保密，仅用于学术研究。请根据您的真实感受作答。谢谢您的合作！</p>
+  </div>
+
+  <div class="card" id="info-header" style="display:none">
+    <h3>评分人信息</h3>
+    <div class="form-group"><label>姓名</label><input type="text" id="rater-name-top" placeholder="请输入您的姓名"></div>
+    <div class="form-group"><label>性别</label><select id="rater-gender-top"><option value="">请选择</option><option>男</option><option>女</option></select></div>
+    <div class="form-group"><label>年龄</label><input type="number" id="rater-age-top" placeholder="请输入您的年龄" min="16" max="80"></div>
+  </div>
+
+  <div class="card" id="info-card">
+    <h3>基本信息</h3>
+    <div class="form-group"><label>姓名</label><input type="text" id="rater-name" placeholder="请输入您的姓名"></div>
+    <div class="form-group"><label>性别</label><select id="rater-gender"><option value="">请选择</option><option>男</option><option>女</option></select></div>
+    <div class="form-group"><label>年龄</label><input type="number" id="rater-age" placeholder="请输入您的年龄" min="16" max="80"></div>
+    <button onclick="startRating()" style="padding:12px 36px;font-size:15px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">开始评分</button>
+    <p id="info-warn" style="color:#ef4444;margin-top:12px;display:none">请填写姓名、性别和年龄后再开始。</p>
+  </div>
+</div>
+
+<div class="submit-area" id="submit-row">
+  <button onclick="showResult()">★ 提交评分结果</button>
+  <p class="hint">全部180张图片评分完成后，点击提交生成结果数据。</p>
+  <textarea id="result-text" readonly style="display:none"></textarea>
+</div>
+
+<script>
+const images = [
+  "death/death_029.jpg","negative/negative_031.jpg","neutral/neutral_088.jpg","death/death_039.jpg","negative/negative_032.jpg","neutral/neutral_032.jpg","neutral/neutral_001.jpg","death/death_015.jpg","negative/negative_020.jpg","neutral/neutral_016.jpg","death/death_007.jpg","neutral/neutral_067.jpg","negative/negative_008.jpg","death/death_022.jpg","death/death_025.jpg","death/death_028.jpg","death/death_041.jpg","neutral/neutral_008.jpg","negative/negative_024.jpg","neutral/neutral_005.jpg","neutral/neutral_054.jpg","death/death_018.jpg","negative/negative_045.jpg","death/death_009.jpg","neutral/neutral_051.jpg","negative/negative_018.jpg","death/death_010.jpg","neutral/neutral_011.jpg","negative/negative_006.jpg","negative/negative_015.jpg","neutral/neutral_029.jpg","negative/negative_042.jpg","negative/negative_040.jpg","neutral/neutral_012.jpg","negative/negative_009.jpg","death/death_012.jpg","neutral/neutral_030.jpg","neutral/neutral_004.jpg","death/death_027.jpg","negative/negative_026.jpg","neutral/neutral_058.jpg","death/death_038.jpg","negative/negative_001.jpg","neutral/neutral_026.jpg","neutral/neutral_084.jpg","negative/negative_007.jpg","death/death_003.jpg","neutral/neutral_065.jpg","neutral/neutral_072.jpg","negative/negative_036.jpg","neutral/neutral_039.jpg","negative/negative_038.jpg","death/death_021.jpg","neutral/neutral_057.jpg","death/death_037.jpg","death/death_023.jpg","negative/negative_021.jpg","neutral/neutral_081.jpg","death/death_002.jpg","neutral/neutral_089.jpg","neutral/neutral_090.jpg","negative/negative_002.jpg","negative/negative_013.jpg","death/death_042.jpg","negative/negative_017.jpg","neutral/neutral_080.jpg","negative/negative_014.jpg","death/death_001.jpg","neutral/neutral_018.jpg","neutral/neutral_077.jpg","neutral/neutral_063.jpg","death/death_024.jpg","death/death_020.jpg","death/death_034.jpg","neutral/neutral_033.jpg","negative/negative_044.jpg","death/death_045.jpg","neutral/neutral_064.jpg","negative/negative_010.jpg","negative/negative_012.jpg","death/death_030.jpg","negative/negative_033.jpg","death/death_016.jpg","negative/negative_023.jpg","neutral/neutral_056.jpg","neutral/neutral_009.jpg","negative/negative_029.jpg","death/death_040.jpg","death/death_036.jpg","neutral/neutral_028.jpg","negative/negative_016.jpg","negative/negative_041.jpg","neutral/neutral_013.jpg","neutral/neutral_070.jpg","death/death_004.jpg","neutral/neutral_069.jpg","negative/negative_028.jpg","death/death_008.jpg","neutral/neutral_041.jpg","negative/negative_005.jpg","neutral/neutral_027.jpg","neutral/neutral_062.jpg","negative/negative_025.jpg","death/death_026.jpg","neutral/neutral_043.jpg","negative/negative_039.jpg","death/death_005.jpg","negative/negative_035.jpg","death/death_019.jpg","neutral/neutral_025.jpg","neutral/neutral_021.jpg","death/death_035.jpg","death/death_044.jpg","neutral/neutral_055.jpg","negative/negative_022.jpg","death/death_033.jpg","death/death_031.jpg","negative/negative_037.jpg","neutral/neutral_052.jpg","negative/negative_011.jpg","neutral/neutral_047.jpg","death/death_032.jpg","neutral/neutral_074.jpg","neutral/neutral_073.jpg","neutral/neutral_037.jpg","neutral/neutral_086.jpg","neutral/neutral_022.jpg","neutral/neutral_068.jpg","neutral/neutral_053.jpg","neutral/neutral_024.jpg","neutral/neutral_061.jpg","negative/negative_003.jpg","negative/negative_004.jpg","death/death_043.jpg","neutral/neutral_071.jpg","death/death_013.jpg","neutral/neutral_078.jpg","neutral/neutral_042.jpg","neutral/neutral_082.jpg","neutral/neutral_040.jpg","neutral/neutral_046.jpg","death/death_006.jpg","neutral/neutral_066.jpg","death/death_011.jpg","neutral/neutral_050.jpg","negative/negative_043.jpg","neutral/neutral_075.jpg","negative/negative_027.jpg","neutral/neutral_076.jpg","neutral/neutral_015.jpg","neutral/neutral_017.jpg","neutral/neutral_020.jpg","negative/negative_019.jpg","neutral/neutral_085.jpg","death/death_017.jpg","neutral/neutral_083.jpg","death/death_014.jpg","neutral/neutral_034.jpg","negative/negative_034.jpg","negative/negative_030.jpg","neutral/neutral_087.jpg","neutral/neutral_079.jpg","neutral/neutral_023.jpg","neutral/neutral_031.jpg","neutral/neutral_060.jpg","neutral/neutral_044.jpg","neutral/neutral_010.jpg","neutral/neutral_035.jpg","neutral/neutral_002.jpg","neutral/neutral_045.jpg","neutral/neutral_014.jpg","neutral/neutral_003.jpg","neutral/neutral_036.jpg","neutral/neutral_007.jpg","neutral/neutral_048.jpg","neutral/neutral_006.jpg","neutral/neutral_038.jpg","neutral/neutral_019.jpg","neutral/neutral_059.jpg","neutral/neutral_049.jpg"
+];
+
+const questions = [
+  "这张图片在多大程度上与死亡相关？",
+  "这张图片让你感到多不愉快？",
+  "这张图片让你感到多害怕？",
+  "这张图片让你感到多厌恶？",
+  "这张图片让你感到多激动？",
+  "你在日常生活中是否常看到类似场景？"
+];
+const anchors = [
+  "(1=毫不相关，7=极度相关)",
+  "(1=非常愉快，7=非常不愉快)",
+  "(1=一点也不害怕，7=极度害怕)",
+  "(1=一点也不厌恶，7=极度厌恶)",
+  "(1=非常平静，7=非常激动)",
+  "(1=从未见过，7=非常常见)"
+];
+
+const TOTAL = images.length;
+const PER_PAGE = 20;
+const totalPages = Math.ceil(TOTAL / PER_PAGE);
+let currentPage = 0;
+
+let ratings = JSON.parse(localStorage.getItem("pic-ratings") || "{}");
+let started = localStorage.getItem("pic-started") === "true";
+let raterName = localStorage.getItem("pic-name") || "";
+let raterGender = localStorage.getItem("pic-gender") || "";
+let raterAge = localStorage.getItem("pic-age") || "";
+
+function startRating(){
+  raterName = document.getElementById("rater-name").value.trim();
+  raterGender = document.getElementById("rater-gender").value;
+  raterAge = document.getElementById("rater-age").value;
+  if(!raterName || !raterGender || !raterAge){
+    // Also check top fields
+    raterName = document.getElementById("rater-name-top").value.trim();
+    raterGender = document.getElementById("rater-gender-top").value;
+    raterAge = document.getElementById("rater-age-top").value;
+  }
+  if(!raterName || !raterGender || !raterAge){
+    document.getElementById("info-warn").style.display = "block";
+    return;
+  }
+  localStorage.setItem("pic-name", raterName);
+  localStorage.setItem("pic-gender", raterGender);
+  localStorage.setItem("pic-age", raterAge);
+  localStorage.setItem("pic-started", "true");
+  document.getElementById("info-card").style.display = "none";
+  document.getElementById("info-header").style.display = "block";
+  document.getElementById("rater-name-top").value = raterName;
+  document.getElementById("rater-gender-top").value = raterGender;
+  document.getElementById("rater-age-top").value = raterAge;
+  started = true;
+  renderPage(0);
+}
+
+function rate(imgIdx, qIdx, val){
+  ratings[imgIdx+"_"+qIdx] = val;
+  localStorage.setItem("pic-ratings", JSON.stringify(ratings));
+  updateProgress();
+  const btns = document.querySelectorAll('[data-img="'+imgIdx+'"][data-q="'+qIdx+'"] button');
+  btns.forEach(b => b.classList.remove("sel"));
+  btns.forEach(b => { if(parseInt(b.textContent)===val) b.classList.add("sel"); });
+}
+
+function updateProgress(){
+  let done = 0;
+  for(let i=0; i<TOTAL; i++){
+    let all=true;
+    for(let q=0; q<6; q++){ if(!ratings[i+"_"+q]){ all=false; break; } }
+    if(all) done++;
+  }
+  document.getElementById("prog-text").textContent = "已评分: " + done + " / " + TOTAL;
+  document.getElementById("bar-fill").style.width = (done/TOTAL*100) + "%";
+}
+
+function renderPage(page){
+  currentPage = page;
+  const container = document.querySelector(".container");
+  const oldCards = container.querySelectorAll(".img-card,.nav-row");
+  oldCards.forEach(c => c.remove());
+  document.getElementById("submit-row").style.display = "none";
+
+  document.getElementById("info-header").style.display = (page === 0 && started) ? "block" : "none";
+
+  const start = page * PER_PAGE;
+  const end = Math.min(start + PER_PAGE, TOTAL);
+
+  for(let i=start; i<end; i++){
+    const card = document.createElement("div");
+    card.className = "card img-card";
+    card.innerHTML = '<h3>图片 ' + (i+1) + ' / ' + TOTAL + '</h3><img src="' + images[i] + '" alt="">';
+
+    for(let q=0; q<6; q++){
+      const div = document.createElement("div");
+      div.className = "q";
+      div.innerHTML = '<div class="qt">' + questions[q] + ' <span style="color:#888;font-weight:400">' + anchors[q] + '</span></div>';
+      const btns = document.createElement("div");
+      btns.className = "btns";
+      btns.setAttribute("data-img", i);
+      btns.setAttribute("data-q", q);
+      const saved = ratings[i+"_"+q];
+      for(let v=1; v<=7; v++){
+        const btn = document.createElement("button");
+        btn.textContent = v;
+        if(saved === v) btn.classList.add("sel");
+        btn.onclick = function(){ rate(i, q, v); };
+        btns.appendChild(btn);
+      }
+      div.appendChild(btns);
+      card.appendChild(div);
+    }
+    container.appendChild(card);
+  }
+
+  const nav = document.createElement("div");
+  nav.className = "nav-row";
+  nav.style.cssText = "display:flex;justify-content:center;align-items:center;gap:20px;margin:24px 0;padding:16px";
+  nav.innerHTML =
+    (page > 0 ? '<button onclick="renderPage('+(page-1)+')" style="padding:12px 28px;font-size:14px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">\u2190 上一页</button>' : '<span style="width:100px"></span>') +
+    '<span style="font-size:14px;color:#666">第 ' + (page+1) + ' / ' + totalPages + ' 页（图片 ' + (start+1) + '\u2013' + end + '）</span>' +
+    (page < totalPages-1 ? '<button onclick="renderPage('+(page+1)+')" style="padding:12px 28px;font-size:14px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">下一页 \u2192</button>' : '<span style="width:100px"></span>');
+  container.appendChild(nav);
+
+  if(page === totalPages-1){
+    document.getElementById("submit-row").style.display = "block";
+  }
+
+  updateProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showResult(){
+  let allDone = true;
+  for(let i=0; i<TOTAL; i++){
+    for(let q=0; q<6; q++){
+      if(!ratings[i+"_"+q]){ allDone=false; break; }
+    }
+  }
+  if(!allDone && !confirm("还有图片未完成评分，确定提交吗？")) return;
+
+  let csv = "姓名,性别,年龄,图片序号,图片文件,死亡相关,不愉快,害怕,厌恶,激动,日常常见\n";
+  for(let i=0; i<TOTAL; i++){
+    let row = '"' + raterName + '","' + raterGender + '","' + raterAge + '",' + (i+1) + ',"' + images[i] + '"';
+    for(let q=0; q<6; q++){ row += "," + (ratings[i+"_"+q] || ""); }
+    csv += row + "\n";
+  }
+
+  const ta = document.getElementById("result-text");
+  ta.style.display = "block";
+  ta.value = csv;
+  ta.select();
+
+  navigator.clipboard.writeText(csv).then(function(){
+    alert("评分数据已复制到剪贴板！请粘贴到问卷星文本框中提交。");
+  }).catch(function(){
+    alert("请手动全选下方文本框（Ctrl+A）→ 复制（Ctrl+C）→ 粘贴到问卷星。");
+  });
+
+  window.scrollTo({top: document.body.scrollHeight, behavior: "smooth"});
+}
+
+// Init
+if(started){
+  document.getElementById("info-card").style.display = "none";
+  document.getElementById("rater-name").value = raterName;
+  document.getElementById("rater-gender").value = raterGender;
+  document.getElementById("rater-age").value = raterAge;
+  document.getElementById("rater-name-top").value = raterName;
+  document.getElementById("rater-gender-top").value = raterGender;
+  document.getElementById("rater-age-top").value = raterAge;
+  renderPage(0);
+} else {
+  document.getElementById("rater-name").value = localStorage.getItem("pic-name")||"";
+  document.getElementById("rater-gender").value = localStorage.getItem("pic-gender")||"";
+  document.getElementById("rater-age").value = localStorage.getItem("pic-age")||"";
+}
+document.getElementById("submit-row").style.display = "none";
+updateProgress();
+</script>
+</body>
+</html>
